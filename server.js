@@ -12,6 +12,8 @@ let lessonsCollection;
 let ordersCollection;
 
 
+app.use(cors());
+app.use(express.json());
 
 app.get('/', (req, res) => {
     res.send('Server is running');
@@ -27,6 +29,17 @@ app.get('/lessons', async (req, res) => {
     }
 });
 
+app.post('/orders', async (req, res) => {
+    try {
+        const order = req.body;
+        const result = await ordersCollection.insertOne(order);
+        res.status(201).json({ insertedId: result.insertedId });
+    } catch (error) {
+        console.error('Error creating order:', error);
+        res.status(500).json({ error: 'Failed to create order' });
+    }
+});
+
 
 
 async function start() {
@@ -34,6 +47,7 @@ async function start() {
         await client.connect();
         const db = client.db('CourseApp');
         lessonsCollection = db.collection('lessons');
+        ordersCollection = db.collection('orders');
         
 
         app.listen(port, () => {
