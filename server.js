@@ -40,6 +40,28 @@ app.post('/orders', async (req, res) => {
     }
 });
 
+app.put('/lessons/:id', async (req, res) => {
+    const { id } = req.params;
+    const updates = req.body;
+
+    try {
+        const result = await lessonsCollection.updateOne(
+            { _id: new ObjectId(id) },
+            { $set: updates }
+        );
+
+        if (result.matchedCount === 0) {
+            return res.status(404).json({ error: 'Lesson not found' });
+        }
+
+        res.json({ modifiedCount: result.modifiedCount });
+    } catch (error) {
+        console.error('Error updating lesson:', error);
+        res.status(500).json({ error: 'Failed to update lesson' });
+    }
+});
+
+
 
 
 async function start() {
