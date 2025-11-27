@@ -1,4 +1,4 @@
-const API_BASE_URL = 'http://localhost:3000'; // Change this to your Render URL when deploying
+const API_BASE_URL = 'https://fs-pro-back-end.onrender.com'; 
 
 export const fetchLessons = async () => {
   try {
@@ -7,6 +7,18 @@ export const fetchLessons = async () => {
     return await response.json();
   } catch (error) {
     console.error('Error fetching lessons:', error);
+    throw error;
+  }
+};
+
+// Search endpoint
+export const searchLessons = async (searchTerm) => {
+  try {
+    const response = await fetch(`${API_BASE_URL}/search?q=${searchTerm}`);
+    if (!response.ok) throw new Error('Failed to search lessons');
+    return await response.json();
+  } catch (error) {
+    console.error('Error searching lessons:', error);
     throw error;
   }
 };

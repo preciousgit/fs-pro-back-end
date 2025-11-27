@@ -15,6 +15,17 @@ let ordersCollection;
 app.use(cors());
 app.use(express.json());
 
+// Serve static files from `public` (images are under `public/images`)
+// This is the conventional static middleware which handles caching and 404s.
+const publicPath = path.join(__dirname, 'public');
+app.use('/images', express.static(path.join(publicPath, 'images')));
+
+// Logger middleware
+app.use((req, res, next) => {
+    console.log(`${new Date().toISOString()} - ${req.method} ${req.url}`);
+    next();
+});
+
 app.get('/', (req, res) => {
     res.send('Server is running');
 });
@@ -26,6 +37,31 @@ app.get('/lessons', async (req, res) => {
     } catch (error) {
         console.error('Error fetching lessons:', error);
         res.status(500).json({ error: 'Failed to fetch lessons' });
+    }
+});
+
+// Search endpoint
+app.get('/search', async (req, res) => {
+    try {
+        const searchTerm = req.query.q?.trim();
+        if (!searchTerm || searchTerm.length === 0) {
+            return res.json([]); // Empty search returns empty
+        }
+
+        const searchRegex = new RegExp(searchTerm, 'i');
+        const results = await lessonsCollection.find({
+            $or: [
+                { title: searchRegex },
+                { location: searchRegex },
+                { category: searchRegex },
+                { price: isNaN(Number(searchTerm)) ? null : Number(searchTerm) }
+            ]
+        }).toArray();
+
+        res.json(results);
+    } catch (error) {
+        console.error('Search error:', error);
+        res.status(500).json({ error: 'Failed to perform search' });
     }
 });
 
@@ -70,7 +106,7 @@ async function start() {
         const db = client.db('CourseApp');
         lessonsCollection = db.collection('lessons');
         ordersCollection = db.collection('orders');
-        
+
 
         app.listen(port, () => {
             console.log(`Server listening on port ${port}`);
