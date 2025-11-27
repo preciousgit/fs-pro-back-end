@@ -16,7 +16,6 @@ app.use(cors());
 app.use(express.json());
 
 // Serve static files from `public` (images are under `public/images`)
-// This is the conventional static middleware which handles caching and 404s.
 const publicPath = path.join(__dirname, 'public');
 app.use('/images', express.static(path.join(publicPath, 'images')));
 
