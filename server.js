@@ -70,16 +70,34 @@ app.post('/lessons', async (req, res) => {
         const result = await lessonsCollection.insertOne(lessons);
         res.status(201).json({ insertedId: result.insertedId });
     } catch (error) {
-        console.error('Error creating lesson:', error);
+        console.error('Error creating lessons:', error);
         res.status(500).json({ error: 'Failed to create lesson' });
     }
 });
 
 app.put('/lessons/:id', async (req, res) => {
     const { id } = req.params;
-    const updates = req.body;
+    
+    // Check if request body exists and is not empty
+    if (!req.body || Object.keys(req.body).length === 0) {
+        return res.status(400).json({ 
+            error: 'Invalid request',
+            details: 'Request body is missing or empty' 
+        });
+    }
 
     try {
+        // Create a new object to avoid modifying the original request
+        const updates = { ...req.body };
+        
+        // Remove _id if it exists to prevent modification
+        if (updates._id) {
+            delete updates._id;
+        }
+
+        // Add updated timestamp
+        updates.updatedAt = new Date();
+
         const result = await lessonsCollection.updateOne(
             { _id: new ObjectId(id) },
             { $set: updates }
@@ -89,13 +107,17 @@ app.put('/lessons/:id', async (req, res) => {
             return res.status(404).json({ error: 'Lesson not found' });
         }
 
-        res.json({ modifiedCount: result.modifiedCount });
+        // Return the updated document
+        const updatedLesson = await lessonsCollection.findOne({ _id: new ObjectId(id) });
+        res.json(updatedLesson);
     } catch (error) {
         console.error('Error updating lesson:', error);
-        res.status(500).json({ error: 'Failed to update lesson' });
+        res.status(500).json({ 
+            error: 'Failed to update lesson',
+            details: error.message 
+        });
     }
 });
-
 
 
 
