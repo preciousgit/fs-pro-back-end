@@ -64,14 +64,14 @@ app.get('/search', async (req, res) => {
     }
 });
 
-app.post('/orders', async (req, res) => {
+app.post('/lessons', async (req, res) => {
     try {
-        const order = req.body;
-        const result = await ordersCollection.insertOne(order);
+        const lessons = req.body;
+        const result = await lessonsCollection.insertOne(lessons);
         res.status(201).json({ insertedId: result.insertedId });
     } catch (error) {
-        console.error('Error creating order:', error);
-        res.status(500).json({ error: 'Failed to create order' });
+        console.error('Error creating lesson:', error);
+        res.status(500).json({ error: 'Failed to create lesson' });
     }
 });
 
