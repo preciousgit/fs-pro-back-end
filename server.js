@@ -119,7 +119,75 @@ app.put('/lessons/:id', async (req, res) => {
     }
 });
 
+// Order routes
+app.post('/orders', async (req, res) => {
+    try {
+        const { name, phone, lessonIDs, numberOfSpace } = req.body;
+        
+        // Basic validation
+        if (!name || !phone || !lessonIDs || !Array.isArray(lessonIDs) || lessonIDs.length === 0) {
+            return res.status(400).json({ 
+                error: 'Invalid request',
+                details: 'Name, phone, and at least one lesson ID are required' 
+            });
+        }
 
+        // Create order with timestamp
+        const order = {
+            name,
+            phone,
+            lessonIDs,
+            numberOfSpace,
+            status: 'confirmed',
+            createdAt: new Date(),
+            updatedAt: new Date()
+        };
+
+        // Insert order into database
+        const result = await ordersCollection.insertOne(order);
+        
+        // Update lesson spaces for each lesson in the order
+        for (const lessonId of lessonIDs) {
+            await lessonsCollection.updateOne(
+                { _id: new ObjectId(lessonId) },
+                { $inc: { spaces: -numberOfSpace } }
+            );
+        }
+
+        // Return the created order with its ID
+        res.status(201).json({
+            _id: result.insertedId,
+            ...order
+        });
+    } catch (error) {
+        console.error('Error creating order:', error);
+        res.status(500).json({ 
+            error: 'Failed to create order',
+            details: error.message 
+        });
+    }
+});
+
+app.get('/orders', async (req, res) => {
+    try {
+        const { phone } = req.query;
+        let query = {};
+        
+        // If phone is provided, filter orders by phone number
+        if (phone) {
+            query.phone = phone;
+        }
+        
+        const orders = await ordersCollection.find(query).toArray();
+        res.json(orders);
+    } catch (error) {
+        console.error('Error fetching orders:', error);
+        res.status(500).json({ 
+            error: 'Failed to fetch orders',
+            details: error.message 
+        });
+    }
+});
 
 async function start() {
     try {
